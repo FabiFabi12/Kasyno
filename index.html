@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hlebki Club - Kasyno & Multiplayer</title>
+<!-- Ładowanie darmowej bazy danych Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+:root {
+--bg-color: #0f172a;
+--panel-bg: #1e293b;
+--accent: #f59e0b;
+--success: #10b981;
+--danger: #ef4444;
+--text: #f8fafc;
+--discord: #5865f2;
+--admin: #a855f7;
+}
+body {
+font-family: 'Segoe UI', Roboto, sans-serif;
+background-color: var(--bg-color);
+color: var(--text);
+margin: 0;
+padding: 0;
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+#auth-screen {
+background: var(--panel-bg);
+padding: 40px;
+border-radius: 20px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+text-align: center;
+max-width: 400px;
+width: 90%;
+animation: fadeIn 0.5s ease;
+}
+input {
+width: 100%;
+padding: 12px;
+margin: 10px 0;
+border-radius: 8px;
+border: 1px solid #475569;
+background: #334155;
+color: white;
+font-size: 16px;
+box-sizing: border-box;
+}
+button {
+background: var(--accent);
+color: #0f172a;
+font-weight: bold;
+border: none;
+padding: 12px 20px;
+border-radius: 8px;
+cursor: pointer;
+width: 100%;
+font-size: 16px;
+transition: all 0.3s ease;
+}
+button:hover {
+transform: translateY(-2px);
+box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+}
+
+.discord-hint {
+margin-top: 25px;
+background: rgba(88, 101, 242, 0.1);
+border: 1px dashed var(--discord);
+padding: 15px;
+border-radius: 10px;
+font-size: 13px;
+color: #cbd5e1;
+}
+.discord-link {
+color: #818cf8;
+font-weight: bold;
+text-decoration: none;
+}
+
+#main-app, #admin-panel {
+display: none;
+width: 95%;
+max-width: 1000px;
+background: var(--panel-bg);
+border-radius: 24px;
+box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+overflow: hidden;
+animation: slideUp 0.5s ease;
+}
+.navbar {
+display: flex;
+background: #111827;
+padding: 10px;
+justify-content: space-around;
+flex-wrap: wrap;
+}
+.nav-btn {
+background: transparent;
+color: #94a3b8;
+width: auto;
+padding: 10px 20px;
+}
+.nav-btn.active {
+color: var(--accent);
+border-bottom: 3px solid var(--accent);
+border-radius: 0;
+}
+
+.content-section {
+display: none;
+padding: 30px;
+animation: fadeIn 0.3s ease;
+}
+.content-section.active { display: block; }
+
+.grid-games {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+gap: 20px;
+}
+.game-card {
+background: #334155;
+padding: 20px;
+border-radius: 16px;
+text-align: center;
+border: 1px solid #475569;
+cursor: pointer;
+transition: 0.3s;
+}
+.game-card:hover { transform: scale(1.05); border-color: var(--accent); }
+.game-card h3 { color: var(--accent); margin-top: 10px; }
+
+.multi-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .multi-container { grid-template-columns: 1fr; } }
+
+.chat-box { background: #1e293b; border: 1px solid #475569; border-radius: 12px; height: 300px; display: flex; flex-direction: column; }
+.chat-messages { flex: 1; padding: 15px; overflow-y: auto; height: 200px; background: #0f172a; border-radius: 8px; }
+.msg { margin-bottom: 8px; font-size: 14px; }
+.msg .sender { color: var(--accent); font-weight: bold; }
+
+.balance-display { font-size: 32px; color: var(--success); font-weight: bold; margin: 20px 0; text-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+.support-card { background: #334155; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid var(--accent); text-align: left; }
+
+.btn-donate {
+background: #e11d48; color: white; text-decoration: none; display: inline-block; text-align: center;
+padding: 12px 24px; border-radius: 8px; font-weight: bold; margin-top: 10px; width: auto; transition: 0.3s;
+}
+.btn-donate:hover { background: #be123c; transform: translateY(-2px); }
+
+/* Style Panelu Admina */
+.admin-header { background: #1e1b4b; padding: 20px; border-bottom: 4px solid var(--admin); text-align: center; }
+.users-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e293b; }
+.users-table th, .users-table td { padding: 12px; border: 1px solid #475569; text-align: left; }
+.users-table th { background: #0f172a; color: var(--admin); }
+.admin-input { width: 100px; padding: 6px; margin-right: 5px; background: #334155; border: 1px solid #475569; color: white; border-radius: 4px; }
+.admin-btn { background: var(--admin); color: white; padding: 6px 12px; width: auto; font-size: 14px; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.wheel-anim { width: 100px; height: 100px; border: 10px solid #334155; border-top: 10px solid var(--accent); border-radius: 50%; margin: 20px auto; animation: spin 1s linear infinite; display: none; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- EKRAN LOGOWANIA -->
+<div id="auth-screen">
+<h2 style="color: var(--accent); margin-bottom: 5px;">🔒 Hlebki Club</h2>
+<p style="color: #94a3b8; font-size: 14px; margin-top: 0;">Wpisz tajne hasło i swój nick</p>
+<input type="password" id="site-pass" placeholder="Hasło dostępu">
+<input type="text" id="user-nick" placeholder="Twój Nickname">
+<button onclick="checkAuth()">Wejdź do klubu ➡️</button>
+<p id="auth-error" style="color: var(--danger); font-size: 14px; margin-top: 10px; display: none;">Niepoprawne hasło!</p>
+
+<div class="discord-hint">
+🔑 <strong>Nie znasz hasła?</strong><br>
+Żeby zdobyć hasło, dołącz na nasz <a href="https://discord.gg/KyqamrQZq" target="_blank" class="discord-link">serwer Discord</a>, wybierz zakładkę <strong>Hasło</strong> i je wpisz!
+</div>
+</div>
+
+<!-- PANEL ADMINA (UKRYTY DLA ZWYKŁYCH GRACZY) -->
+<div id="admin-panel">
+<div class="admin-header">
+<h2 style="color: var(--admin); margin: 0;">👑 Panel Zarządzania Hlebki Club</h2>
+<p style="color: #cbd5e1; margin: 5px 0 0 0;">Zarządzaj portfelami wszystkich zalogowanych użytkowników</p>
+<button onclick="logout()" style="background: var(--danger); width: auto; margin-top: 10px; padding: 5px 15px; font-size: 14px; color: white;">Wyloguj Panel Admina ❌</button>
+</div>
+<div style="padding: 30px;">
+<h3>👥 Lista zarejestrowanych graczy</h3>
+<table class="users-table">
+<thead>
+<tr>
+<th>Nazwa użytkownika (Nick)</th>
+<th>Stan Konta (Punkty)</th>
+<th>Akcja (Zmień stan konta)</th>
+</tr>
+</thead>
+<tbody id="admin-users-list">
+<tr>
+<td colspan="3" style="text-align: center; color: #94a3b8;">Ładowanie danych z bazy Firebase...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- GŁÓWNA APLIKACJA DLA GRACZY -->
+<div id="main-app">
+<div class="navbar">
+<button class="nav-btn active" onclick="switchTab('games')">🎮 Gry</button>
+<button class="nav-btn" onclick="switchTab('multiplayer')">👥 Wspólna Gra & Czat</button>
+<button class="nav-btn" onclick="switchTab('account')">💰 Stan Konta</button>
+<button class="nav-btn" onclick="switchTab('daily')">🎁 Daily Bonus</button>
+<button class="nav-btn" style="color: #60a5fa;" onclick="switchTab('support')">💸 Wesprzyj stronę</button>
+<button class="nav-btn" style="color: var(--danger);" onclick="logout()">Wyloguj</button>
+</div>
+
+<!-- ZAKŁADKA: GRY -->
+<div id="tab-games" class="content-section active">
+<h2>Wybierz tryb gierki</h2>
+<div class="grid-games">
+<div class="game-card" onclick="startSingleGame()">
+<div style="font-size: 40px;">🎡</div>
+<h3>Ruletka Solo</h3>
+<p style="font-size: 12px; color: #94a3b8;">Klasyczna gra losowa przeciwko botu</p>
+</div>
+<div class="game-card" onclick="switchTab('multiplayer')">
+<div style="font-size: 40px;">🎲</div>
+<h3>Zgadnij Liczbę (Multi)</h3>
+<p style="font-size: 12px; color: #94a3b8;">Graj 1v1 ze znajomymi o wirtualną kasę</p>
+</div>
+</div>
+
+<div id="solo-roulette-box" style="display:none; margin-top: 30px; background: #334155; padding: 20px; border-radius: 15px;">
+<h3>🎡 Koło fortuny Ruletki</h3>
+<input type="number" id="roulette-bet" value="50" style="width: 200px;" placeholder="Zakład">
+<div style="margin: 10px 0;">
+<button onclick="setRouletteColor('czerwone')" id="btn-r-red" style="background: var(--danger); width: auto; margin-right: 10px;">Czerwone</button>
+<button onclick="setRouletteColor('czarne')" id="btn-r-black" style="background: #111; color: white; width: auto;">Czarne</button>
+</div>
+<button onclick="playSoloRoulette()" style="margin-top: 10px;">Losuj! 🚀</button>
+<div class="wheel-anim" id="wheel"></div>
+<div id="roulette-result" style="font-size: 18px; font-weight: bold; margin-top: 15px;"></div>
+</div>
+</div>
+
+<!-- ZAKŁADKA: MULTI & CZAT -->
+<div id="tab-multiplayer" class="content-section">
+<h2>👥 Tryb Wieloosobowy & Czat</h2>
+<div class="multi-container">
+<div>
+<h3>🔍 Szukaj Gracza</h3>
+<input type="text" id="search-nick" placeholder="Wpisz nickname znajomego...">
+<button onclick="searchPlayer()">Szukaj 🔎</button>
+
+<div id="search-result" style="margin-top: 15px; display: none; background: #334155; padding: 15px; border-radius: 8px;">
+<span id="found-name" style="font-weight: bold;"></span>
+<button onclick="invitePlayer()" style="width: auto; float: right; padding: 5px 10px; font-size: 14px;">Zaproś do gry 🤝</button>
+<div style="clear: both;"></div>
+</div>
+
+<div id="active-game-box" style="display:none; margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px dashed var(--accent);">
+<h4 style="color: var(--accent); margin: 0 0 10px 0;">🎮 Trwa gra z: <span id="opponent-name"></span></h4>
+<p style="font-size: 14px;">System wylosował pulę nagrody: <strong><span id="multi-prize">0</span> punktów</strong> (Nic nie tracisz!)</p>
+<p>Zgadnij liczbę od 1 do 5 wybrana przez bota:</p>
+<input type="number" id="multi-guess" min="1" max="5" placeholder="Twoja liczba (1-5)">
+<button onclick="submitMultiGuess()">Wyślij strzał 🎯</button>
+<div id="multi-game-result" style="margin-top: 10px; font-weight: bold;"></div>
+</div>
+</div>
+
+<div>
+<h3>💬 Czat pokoju</h3>
+<div class="chat-box">
+<div class="chat-messages" id="chat-msg-box">
+<div class="msg"><span class="sender">System:</span> Witamy na czacie Hlebki Club!</div>
+</div>
+<div style="display:flex;">
+<input type="text" id="chat-input" placeholder="Napisz coś do gracza..." style="margin: 0; border-radius: 0 0 0 8px;">
+<button onclick="sendChatMessage()" style="width: auto; border-radius: 0 0 8px 0;">Wyślij</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ZAKŁADKA: STAN KONTA -->
+<div id="tab-account" class="content-section">
+<h2>💰 Twój Portfel</h2>
+<p>Witaj, <span id="profile-nick" style="color: var(--accent); font-weight: bold;"></span>!</p>
+<div class="balance-display"><span id="user-balance">1000</span> 🪙</div>
+<p style="color: #94a3b8; font-size: 14px;">Punkty służą wyłącznie do zabawy ze znajomymi w Hlebki Club.</p>
+</div>
+
+<!-- ZAKŁADKA: DAILY -->
+<div id="tab-daily" class="content-section" style="text-align: center;">
+<h2>🎁 Darmowy Bonus Codzienny</h2>
+<p>Odbierz swoje darmowe punkty na grę raz na dobę!</p>
+<div style="font-size: 60px; margin: 20px 0;">🎁</div>
+<button id="daily-btn" onclick="claimDaily()" style="max-width: 300px;">Odbierz 100 punktów 🪙</button>
+<p id="daily-status" style="margin-top: 15px; color: var(--success); font-weight: bold;"></p>
+</div>
+
+<!-- ZAKŁADKA: WSPARCIE (TIPLY) -->
+<div id="tab-support" class="content-section">
+<h2>💸 Wesprzyj rozwój Hlebki Club</h2>
+<p>Podoba Ci się gra? Możesz rzucić symboliczną złotówkę lub grosz na utrzymanie serwera. Kliknij przycisk poniżej, aby bezpiecznie wysłać tipa!</p>
+<div class="support-card" style="text-align: center; padding: 40px 20px;">
+<div style="font-size: 50px; margin-bottom: 10px;">🛡️</div>
+<h3>Szybkie i bezpieczne dotacje przez Tipply</h3>
+<p style="color: #94a3b8; max-width: 500px; margin: 0 auto 20px auto;">Każdy grosz pomaga ulepszać Hlebki Club!</p>
+<a href="https://tipply.pl/@fabik12" target="_blank" class="btn-donate">👉 Wesprzyj mnie na Tipply 👈</a>
+</div>
+</div>
+</div>
+
+<script>
+// Konfiguracja wbudowanej i darmowej bazy danych Firebase dla "Hlebki Club"
+const firebaseConfig = {
+databaseURL: "https://hlebki-club-default-rtdb.europe-west1.firebasedatabase.app/"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+let balance = 1000;
+let myNick = localStorage.getItem('hl_nick') || "";
+let lastDaily = localStorage.getItem('hl_daily') || 0;
+let selectedRouletteColor = "czerwone";
+let simulatedOpponent = "";
+let isAdminMode = localStorage.getItem('hl_is_admin') === 'true';
+
+if(localStorage.getItem('hl_authenticated') === 'true' && myNick) {
+if(isAdminMode) {
+showAdminPanel();
+} else {
+showApp();
+}
+}
+
+function checkAuth() {
+let pass = document.getElementById('site-pass').value;
+let nick = document.getElementById('user-nick').value.trim();
+
+// Sprawdzenie tajnego hasła administratora
+if (pass === "HlebkiAdmin2026") {
+localStorage.setItem('hl_authenticated', 'true');
+localStorage.setItem('hl_is_admin', 'true');
+localStorage.setItem('hl_nick', "Właściciel");
+showAdminPanel();
+return;
+}
+
+if (pass === "Hlebki" && nick.length > 1) {
+localStorage.setItem('hl_authenticated', 'true');
+localStorage.setItem('hl_is_admin', 'false');
+localStorage.setItem('hl_nick', nick);
+myNick = nick;
+
+// Pobierz stan konta z bazy danych lub stwórz nowego gracza
+database.ref('users/' + nick).once('value').then((snapshot) => {
+if (snapshot.exists()) {
+balance = snapshot.val().balance;
+} else {
+balance = 1000; // startowa kasa
+database.ref('users/' + nick).set({ balance: balance });
+}
+document.getElementById('auth-error').style.display = 'none';
+showApp();
+});
+} else {
+document.getElementById('auth-error').style.display = 'block';
+document.getElementById('auth-error').innerText = nick.length <= 1 ? "Wpisz poprawny Nick!" : "Niepoprawne hasło!";
+}
+}
+
+function showApp() {
+document.getElementById('auth-screen').style.display = 'none';
+document.getElementById('main-app').style.display = 'block';
+document.getElementById('profile-nick').innerText = myNick;
+
+// Słuchaj zmian stanu konta w czasie rzeczywistym
+database.ref('users/' + myNick + '/balance').on('value', (snapshot) => {
+if(snapshot.exists()) {
+balance = snapshot.val();
+document.getElementById('user-balance').innerText = balance;
+}
+});
+}
+
+function showAdminPanel() {
+document.getElementById('auth-screen').style.display = 'none';
+document.getElementById('admin-panel').style.display = 'block';
+
+// Ładowanie wszystkich użytkowników do panelu admina na żywo
+database.ref('users').on('value', (snapshot) => {
+const usersList = document.getElementById('admin-users-list');
+usersList.innerHTML = "";
+
+if(!snapshot.exists()) {
+usersList.innerHTML = `<tr><td colspan="3" style="text-align: center;">Brak zarejestrowanych graczy w bazie.</td></tr>`;
+return;
+}
+
+snapshot.forEach((childSnapshot) => {
+const uName = childSnapshot.key;
+const uData = childSnapshot.val();
+
+usersList.innerHTML += `
+<tr>
+<td style="font-weight: bold; color: var(--accent);">${uName}</td>
+<td style="color: var(--success); font-weight: bold;">${uData.balance} 🪙</td>
+<td>
+<input type="number" id="input-${uName}" placeholder="Nowa kwota" class="admin-input">
+<button onclick="updateUserBalance('${uName}')" class="admin-btn">Zapisz 💾</button>
+</td>
+</tr>
+`;
+});
+});
+}
+
+function updateUserBalance(username) {
+let newVal = parseInt(document.getElementById('input-' + username).value);
+if(isNaN(newVal) || newVal < 0) return alert("Wpisz poprawną, dodatnią liczbę punktów!");
+
+database.ref('users/' + username).update({ balance: newVal });
+alert(`Zaktualizowano stan konta gracza ${username} na ${newVal} punktów!`);
+}
+
+function logout() {
+localStorage.clear();
+location.reload();
+}
+
+function updateDatabaseBalance() {
+if(myNick && localStorage.getItem('hl_is_admin') !== 'true') {
+database.ref('users/' + myNick).update({ balance: balance });
+}
+}
+
+function switchTab(tabName) {
+document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+document.getElementById('tab-' + tabName).classList.add('active');
+const clickedBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabName));
+if (clickedBtn) clickedBtn.classList.add('active');
+}
+
+function claimDaily() {
+let now = new Date().getTime();
+if (now - lastDaily > 86400000) {
+balance += 100;
+lastDaily = now;
+localStorage.setItem('hl_daily', lastDaily);
+updateDatabaseBalance();
+document.getElementById('daily-status').innerText = "Pomyślnie dodano 100 darmowych punktów! 🎉";
+document.getElementById('daily-status').style.color = "var(--success)";
+} else {
+let remaining = Math.ceil((86400000 - (now - lastDaily)) / 1000 / 60 / 60);
+document.getElementById('daily-status').innerText = `Odebrałeś już dzisiejszy bonus. Wróć za ${remaining}h.`;
+document.getElementById('daily-status').style.color = "var(--danger)";
+}
+}
+
+function startSingleGame() { document.getElementById('solo-roulette-box').style.display = 'block'; }
+function setRouletteColor(color) {
+selectedRouletteColor = color;
+document.getElementById('btn-r-red').style.border = color === 'czerwone' ? '2px solid white' : 'none';
+document.getElementById('btn-r-black').style.border = color === 'czarne' ? '2px solid white' : 'none';
+}
+function playSoloRoulette() {
+let bet = parseInt(document.getElementById('roulette-bet').value);
+let resultDiv = document.getElementById('roulette-result');
+let wheel = document.getElementById('wheel');
+
+if(isNaN(bet) || bet > balance || bet <= 0) { return alert("Błędna kwota zakładu!"); }
+
+wheel.style.display = 'block';
+resultDiv.innerText = "";
+
+setTimeout(() => {
+wheel.style.display = 'none';
+let num = Math.floor(Math.random() * 37);
+let rolledColor = (num === 0) ? 'zielone' : (num % 2 === 0 ? 'czarne' : 'czerwone');
+
+if(selectedRouletteColor === rolledColor) {
+balance += bet;
+resultDiv.innerHTML = `<span style="color: var(--success)">Wygrałeś! Wypadło ${num}. +${bet * 2} pkt!</span>`;
+} else {
+balance -= bet;
+resultDiv.innerHTML = `<span style="color: var(--danger)">Przegrałeś! Wypadło ${num}. -${bet} pkt.</span>`;
+}
+updateDatabaseBalance();
+}, 1200);
+}
+
+function searchPlayer() {
+let sNick = document.getElementById('search-nick').value.trim();
+if(sNick.length > 0) {
+document.getElementById('search-result').style.display = 'block';
+document.getElementById('found-name').innerText = `Gracz: ${sNick} (Dostępny 🟢)`;
+simulatedOpponent = sNick;
+}
+}
+
+function invitePlayer() {
+alert(`Wysłano zaproszenie do gracza ${simulatedOpponent}! Oczekiwanie na akceptację...`);
+setTimeout(() => {
+alert(`${simulatedOpponent} zaakceptował Twoje zaproszenie do gry!`);
+document.getElementById('active-game-box').style.display = 'block';
+document.getElementById('opponent-name').innerText = simulatedOpponent;
+document.getElementById('multi-prize').innerText = Math.floor(Math.random() * 500) + 100;
+}, 1500);
+}
+
+function submitMultiGuess() {
+let guess = parseInt(document.getElementById('multi-guess').value);
+let botNum = Math.floor(Math.random() * 5) + 1;
+let prize = parseInt(document.getElementById('multi-prize').innerText);
+let resDiv = document.getElementById('multi-game-result');
+
+if(isNaN(guess) || guess < 1 || guess > 5) { return alert("Wpisz liczbę od 1 do 5!"); }
+
+if(guess === botNum) {
+balance += prize;
+resDiv.innerHTML = `<span style="color: var(--success)">Brawo! Oboje wygraliście bonus! Zyskujesz ${prize} pkt!</span>`;
+} else {
+resDiv.innerHTML = `<span style="color: var(--accent)">Pudło! Losowa liczba to była ${botNum}. Nic nie tracisz!</span>`;
+}
+updateDatabaseBalance();
+}
+
+function sendChatMessage() {
+let inp = document.getElementById('chat-input');
+let text = inp.value.trim();
+if(text.length === 0) return;
+
+let cBox = document.getElementById('chat-msg-box');
+cBox.innerHTML += `<div class="msg"><span class="sender">${myNick}:</span> ${text}</div>`;
+inp.value = "";
+cBox.scrollTop = cBox.scrollHeight;
+
+if(simulatedOpponent) {
+setTimeout(() => {
+cBox.innerHTML += `<div class="msg"><span class="sender" style="color:#60a5fa">${simulatedOpponent}:</span> Klasyczny czat! Gramy? 😎</div>`;
+cBox.scrollTop = cBox.scrollHeight;
+}, 1000);
+}
+}
+</script>
+
+</body>
+</html>
