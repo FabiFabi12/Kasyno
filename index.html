@@ -26,6 +26,8 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            -webkit-user-select: none;
+            user-select: none;
         }
         #auth-screen, #main-app, #admin-panel {
             background: var(--panel-bg);
@@ -62,25 +64,26 @@
         }
         button:hover { opacity: 0.9; }
 
-        /* KLAWIATURA NUMERYCZNA (STYLE IMAGE_5.PNG) */
+        /* KLAWIATURA NUMERYCZNA (ZGODNA Z IMAGE_5.PNG) */
         .pin-display-container {
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin: 20px 0;
+            margin: 25px 0;
         }
         .pin-box {
             width: 55px;
             height: 55px;
-            background: #334155;
+            background: #111827;
             border: 2px solid #475569;
             border-radius: 8px;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
             color: var(--accent);
+            transition: all 0.1s ease;
         }
         .keypad {
             display: grid;
@@ -93,17 +96,18 @@
             background: #111827;
             color: white;
             border: 1px solid #334155;
-            padding: 20px;
-            font-size: 22px;
+            height: 65px;
+            font-size: 24px;
             font-weight: bold;
             border-radius: 12px;
             cursor: pointer;
-            user-select: none;
-            text-align: center;
-            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
         }
         .key-btn:active { background: #475569; }
-        .key-btn.action { background: #1e293b; font-size: 16px; display: flex; justify-content: center; align-items: center; }
+        .key-btn.action { background: #1e293b; font-size: 15px; color: #94a3b8; }
 
         /* PANEL ADMINA */
         .admin-header { background: #1e1b4b; padding: 15px; border-bottom: 4px solid var(--admin); text-align: center; border-radius: 10px; }
@@ -112,10 +116,10 @@
         .users-table th { background: #0f172a; color: var(--admin); }
         .admin-input { width: 90px; padding: 5px; background: #334155; color: white; border: 1px solid #475569; border-radius: 4px; display: inline-block; }
 
-        /* RESZTA */
+        /* SEKCJE GIER */
         .game-box { background: #0f172a; padding: 20px; border-radius: 12px; margin-top: 20px; border: 1px solid #334155; }
         .balance { font-size: 28px; color: var(--success); font-weight: bold; text-align: center; margin: 15px 0; }
-        .error { color: var(--danger); font-size: 14px; text-align: center; margin-top: 10px; font-weight: bold; }
+        .error { color: var(--danger); font-size: 14px; text-align: center; margin-top: 15px; font-weight: bold; }
         .success-text { color: var(--success); font-weight: bold; text-align: center; }
         .rules-footer { margin-top: 30px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px dashed #475569; padding-top: 15px; }
         .color-btn { width: auto; padding: 10px 15px; margin: 5px; border: 2px solid transparent; }
@@ -124,14 +128,14 @@
 </head>
 <body>
 
-<!-- EKRAN LOGOWANIA (STYLE IMAGE_5.PNG) -->
+<!-- EKRAN LOGOWANIA -->
 <div id="auth-screen">
     <h2 style="text-align: center; color: var(--accent); margin-bottom: 5px;">🔒 Hlebki Club</h2>
-    <p style="text-align: center; color: #94a3b8; font-size: 14px; margin: 0 0 15px 0;">Podaj swój Nick i wklep 4-cyfrowy PIN</p>
+    <p style="text-align: center; color: #94a3b8; font-size: 14px; margin: 0 0 15px 0;">Podaj Nick i wklep kod na klawiaturze ekranowej</p>
     
-    <input type="text" id="user-nick" placeholder="Wpisz swój Nickname">
+    <input type="text" id="user-nick" placeholder="Wpisz swój Nickname" autocomplete="off">
 
-    <!-- Kafelki kodu Passcode -->
+    <!-- Wyświetlacz kodu wzorowany na image_5.png -->
     <div class="pin-display-container">
         <div class="pin-box" id="dot-0"></div>
         <div class="pin-box" id="dot-1"></div>
@@ -139,20 +143,20 @@
         <div class="pin-box" id="dot-3"></div>
     </div>
 
-    <!-- Klawiatura Numeryczna -->
+    <!-- Prawdziwa klawiatura ekranowa, która nie odpala klawiatury systemowej -->
     <div class="keypad">
-        <div class="key-btn" onclick="pressNum(1)">1</div>
-        <div class="key-btn" onclick="pressNum(2)">2</div>
-        <div class="key-btn" onclick="pressNum(3)">3</div>
-        <div class="key-btn" onclick="pressNum(4)">4</div>
-        <div class="key-btn" onclick="pressNum(5)">5</div>
-        <div class="key-btn" onclick="pressNum(6)">6</div>
-        <div class="key-btn" onclick="pressNum(7)">7</div>
-        <div class="key-btn" onclick="pressNum(8)">8</div>
-        <div class="key-btn" onclick="pressNum(9)">9</div>
-        <div class="key-btn action" onclick="clearPin()">Cancel</div>
-        <div class="key-btn" onclick="pressNum(0)">0</div>
-        <div class="key-btn action" onclick="backspacePin()">❌</div>
+        <button class="key-btn" type="button" onclick="pressNum(1)">1</button>
+        <button class="key-btn" type="button" onclick="pressNum(2)">2</button>
+        <button class="key-btn" type="button" onclick="pressNum(3)">3</button>
+        <button class="key-btn" type="button" onclick="pressNum(4)">4</button>
+        <button class="key-btn" type="button" onclick="pressNum(5)">5</button>
+        <button class="key-btn" type="button" onclick="pressNum(6)">6</button>
+        <button class="key-btn" type="button" onclick="pressNum(7)">7</button>
+        <button class="key-btn" type="button" onclick="pressNum(8)">8</button>
+        <button class="key-btn" type="button" onclick="pressNum(9)">9</button>
+        <button class="key-btn action" type="button" onclick="clearPin()">Cancel</button>
+        <button class="key-btn" type="button" onclick="pressNum(0)">0</button>
+        <button class="key-btn action" type="button" onclick="backspacePin()">❌</button>
     </div>
     
     <div id="auth-error" class="error"></div>
@@ -184,10 +188,6 @@
         <h3>Witaj, <span id="display-nick" style="color:var(--accent)"></span>!</h3>
         <button onclick="logout()" style="width: auto; margin: 0; padding: 5px 15px; background: var(--danger); color: white;">Wyloguj</button>
     </div>
-
-    <p style="color: var(--danger); font-weight: bold; font-size: 13px; text-align: center; background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: 6px;">
-        ⚠️ Jeśli wpiszesz hasło, odśwież stronę!
-    </p>
 
     <div class="balance">Twój stan konta: <span id="display-balance">0</span> 🪙</div>
 
@@ -248,13 +248,13 @@
     let currentPin = "";
     let chosenColor = "czarne";
 
-    // Obsługa klikania w klawiaturę Passcode
+    // Reakcja na klikanie dużych przycisków na ekranie
     function pressNum(num) {
         if (currentPin.length < 4) {
             currentPin += num;
             updatePinDots();
             if (currentPin.length === 4) {
-                setTimeout(submitAuth, 200);
+                setTimeout(submitAuth, 250);
             }
         }
     }
@@ -274,27 +274,25 @@
         for (let i = 0; i < 4; i++) {
             const dot = document.getElementById('dot-' + i);
             if (i < currentPin.length) {
-                dot.innerText = "*";
-                dot.style.background = "#f59e0b";
+                dot.innerText = "●"; 
+                dot.style.borderColor = "#f59e0b";
             } else {
                 dot.innerText = "";
-                dot.style.background = "#334155";
+                dot.style.borderColor = "#475569";
             }
         }
     }
 
-    // Weryfikacja logowania / rejestracji / panelu admina
     function submitAuth() {
         const nick = document.getElementById('user-nick').value.trim();
         const errorDiv = document.getElementById('auth-error');
 
         if (!nick) {
-            errorDiv.innerText = "Najpierw wpisz swój Nickname powyżej!";
+            errorDiv.innerText = "Najpierw wpisz swój Nickname u góry!";
             clearPin();
             return;
         }
 
-        // TAJNY PIN ADMINA: 9999
         if (currentPin === "9999") {
             showAdminPanel();
             return;
@@ -312,7 +310,6 @@
                     clearPin();
                 }
             } else {
-                // Automatyczna rejestracja nowej osoby z wklepanym właśnie PINem
                 myNick = nick;
                 myBalance = 1000;
                 database.ref('users/' + nick).set({
@@ -353,7 +350,7 @@
                         <td style="color:var(--accent); font-weight:bold;">${uName}</td>
                         <td style="color:var(--success); font-weight:bold;">${uData.balance} 🪙</td>
                         <td>
-                            <input type="number" id="adm-${uName}" class="admin-input" placeholder="Kwota">
+                            <input type="number" id="adm-${uName}" class="admin-input" placeholder="Suma">
                             <button onclick="adminUpdate('${uName}')" style="width:auto; padding:4px 8px; margin:0; font-size:12px; background:var(--admin); color:white;">Zapisz</button>
                         </td>
                     </tr>
@@ -364,9 +361,8 @@
 
     function adminUpdate(targetUser) {
         const val = parseInt(document.getElementById('adm-' + targetUser).value);
-        if (isNaN(val) || val < 0) return alert("Wpisz prawidłową kwotę!");
+        if (isNaN(val) || val < 0) return alert("Wpisz kwotę!");
         database.ref('users/' + targetUser).update({ balance: val });
-        alert("Zmieniono stan konta gracza " + targetUser);
     }
 
     function updateBalanceInDB() {
@@ -393,7 +389,7 @@
         document.getElementById('game-slots').style.display = selected === 'slots' ? 'block' : 'none';
     }
 
-    // --- GRY ---
+    // GRY
     function selectColor(color) {
         chosenColor = color;
         document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active-color'));
