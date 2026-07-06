@@ -64,7 +64,7 @@
         }
         button:hover { opacity: 0.9; }
 
-        /* KLAWIATURA NUMERYCZNA (ZGODNA Z IMAGE_5.PNG) */
+        /* KLAWIATURA NUMERYCZNA (Z PTASZKIEM DO ZATWIERDZANIA) */
         .pin-display-container {
             display: flex;
             justify-content: center;
@@ -107,7 +107,9 @@
             touch-action: manipulation;
         }
         .key-btn:active { background: #475569; }
-        .key-btn.action { background: #1e293b; font-size: 15px; color: #94a3b8; }
+        .key-btn.action { background: #1e293b; font-size: 14px; color: #94a3b8; }
+        .key-btn.submit-btn { background: var(--success); color: white; font-size: 26px; border-color: #059669; }
+        .key-btn.submit-btn:active { background: #059669; }
 
         /* PANEL ADMINA */
         .admin-header { background: #1e1b4b; padding: 15px; border-bottom: 4px solid var(--admin); text-align: center; border-radius: 10px; }
@@ -128,14 +130,12 @@
 </head>
 <body>
 
-<!-- EKRAN LOGOWANIA -->
 <div id="auth-screen">
     <h2 style="text-align: center; color: var(--accent); margin-bottom: 5px;">🔒 Hlebki Club</h2>
-    <p style="text-align: center; color: #94a3b8; font-size: 14px; margin: 0 0 15px 0;">Podaj Nick i wklep kod na klawiaturze ekranowej</p>
+    <p style="text-align: center; color: #94a3b8; font-size: 14px; margin: 0 0 15px 0;">Podaj Nick, wklep PIN i zatwierdź zielonym ptaszkiem ✅</p>
     
-    <input type="text" id="user-nick" placeholder="Wpisz swój Nickname" autocomplete="off">
+    <input type="text" id="user-nick" placeholder="Wpisz swój Nickname" autocomplete="off" inputmode="text">
 
-    <!-- Wyświetlacz kodu wzorowany na image_5.png -->
     <div class="pin-display-container">
         <div class="pin-box" id="dot-0"></div>
         <div class="pin-box" id="dot-1"></div>
@@ -143,7 +143,6 @@
         <div class="pin-box" id="dot-3"></div>
     </div>
 
-    <!-- Prawdziwa klawiatura ekranowa, która nie odpala klawiatury systemowej -->
     <div class="keypad">
         <button class="key-btn" type="button" onclick="pressNum(1)">1</button>
         <button class="key-btn" type="button" onclick="pressNum(2)">2</button>
@@ -154,15 +153,14 @@
         <button class="key-btn" type="button" onclick="pressNum(7)">7</button>
         <button class="key-btn" type="button" onclick="pressNum(8)">8</button>
         <button class="key-btn" type="button" onclick="pressNum(9)">9</button>
-        <button class="key-btn action" type="button" onclick="clearPin()">Cancel</button>
+        <button class="key-btn action" type="button" onclick="backspacePin()">Cofnij ↩️</button>
         <button class="key-btn" type="button" onclick="pressNum(0)">0</button>
-        <button class="key-btn action" type="button" onclick="backspacePin()">❌</button>
+        <button class="key-btn submit-btn" type="button" onclick="submitAuth()">✅</button>
     </div>
     
     <div id="auth-error" class="error"></div>
 </div>
 
-<!-- PANEL ADMINISTRATORA (DLA KODU 9999) -->
 <div id="admin-panel" style="display: none;">
     <div class="admin-header">
         <h2 style="color: var(--admin); margin: 0;">👑 Panel Właściciela</h2>
@@ -182,7 +180,6 @@
     </div>
 </div>
 
-<!-- GŁÓWNA APLIKACJA -->
 <div id="main-app" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3>Witaj, <span id="display-nick" style="color:var(--accent)"></span>!</h3>
@@ -198,7 +195,6 @@
         <option value="slots">💎 Maszynka (Sety znaków)</option>
     </select>
 
-    <!-- GRA 1: RULETKA -->
     <div id="game-roulette" class="game-box">
         <h4>🎡 Ruletka All-In</h4>
         <p style="font-size: 13px; color: #94a3b8;">Stawiasz wszystko! Trafienie koloru podwaja stan konta (x2).</p>
@@ -212,7 +208,6 @@
         <div id="roulette-result" style="text-align: center; margin-top: 10px; font-weight: bold;"></div>
     </div>
 
-    <!-- GRA 2: LOSOWANIE -->
     <div id="game-draw" class="game-box" style="display: none;">
         <h4>🎲 Tryb Losowania</h4>
         <p style="font-size: 13px; color: #94a3b8;">Wejście kosztuje dokładnie 1 000 🪙. Losuje od -1500 do +2500 lub od -1000 do +1000.</p>
@@ -220,7 +215,6 @@
         <div id="draw-result" style="text-align: center; margin-top: 10px; font-weight: bold;"></div>
     </div>
 
-    <!-- GRA 3: MASZYNKA -->
     <div id="game-slots" class="game-box" style="display: none;">
         <h4>💎 Maszynka do gier</h4>
         <p style="font-size: 13px; color: #94a3b8;">🍉🍉🍉 = Zwrot kasy | 💎💎💎 = Wygrana x3 | 7️⃣7️⃣7️⃣ = Wygrana x6</p>
@@ -248,23 +242,22 @@
     let currentPin = "";
     let chosenColor = "czarne";
 
-    // Reakcja na klikanie dużych przycisków na ekranie
     function pressNum(num) {
+        document.getElementById('user-nick').blur();
         if (currentPin.length < 4) {
             currentPin += num;
             updatePinDots();
-            if (currentPin.length === 4) {
-                setTimeout(submitAuth, 250);
-            }
         }
     }
 
     function backspacePin() {
+        document.getElementById('user-nick').blur();
         currentPin = currentPin.slice(0, -1);
         updatePinDots();
     }
 
     function clearPin() {
+        document.getElementById('user-nick').blur();
         currentPin = "";
         updatePinDots();
         document.getElementById('auth-error').innerText = "";
@@ -284,12 +277,18 @@
     }
 
     function submitAuth() {
+        document.getElementById('user-nick').blur();
         const nick = document.getElementById('user-nick').value.trim();
         const errorDiv = document.getElementById('auth-error');
 
         if (!nick) {
             errorDiv.innerText = "Najpierw wpisz swój Nickname u góry!";
             clearPin();
+            return;
+        }
+
+        if (currentPin.length !== 4) {
+            errorDiv.innerText = "PIN musi mieć dokładnie 4 cyfry!";
             return;
         }
 
@@ -319,6 +318,8 @@
                     startSession();
                 });
             }
+        }).catch((err) => {
+            errorDiv.innerText = "Błąd bazy danych. Spróbuj ponownie.";
         });
     }
 
@@ -389,7 +390,7 @@
         document.getElementById('game-slots').style.display = selected === 'slots' ? 'block' : 'none';
     }
 
-    // GRY
+    // SEKRETY GIER
     function selectColor(color) {
         chosenColor = color;
         document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('active-color'));
